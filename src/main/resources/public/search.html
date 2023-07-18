@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <style>
+        td{
+            border: 2px solid black;
+        }
+    </style>
+</head>
+<body>
+    <button type="button" id="random">Generuj losowo baze samochodow</button>
+    <p><a href="index.html">Index</a> </p>
+    <p><a href="cars.html">delete/update cars</a> </p>
+    <p><a href="admin.html">Faktury</a> </p>
+
+
+
+    <br/>
+
+    <p>Faktura za wszystkie auta <button name="action" value="all" onclick="fakturagen(this)">generuj fakture</button> <a id="fakturaAll" href="#">Pobierz</a></p>
+    <p>Faktura - auta z danego rocznika <select id="selectYear" name="selectYear">
+        <option value="2002">2002</option>
+        <option value="2003">2003</option>
+        <option value="2004">2004</option>
+        <option value="2005">2005</option>
+        <option value="2006">2006</option>
+        <option value="2007">2007</option>
+        <option value="2008">2008</option>
+    </select> <button name="action" value="year" onclick="fakturagen(this)">generuj fakture</button> <a id="fakturaYear" href="#">Pobierz</a> </p>
+    <p>faktura - auta z danego zakresu cen od:<input type="number" id="od">do:<input type="number" id="do"><button name="action" value="prize" onclick="fakturagen(this)">generuj fakture</button><a id="fakturaPrize" href="#">Pobierz</a></p>
+
+    <table id="table"></table>
+
+    <script>
+
+        fakturagen = async (btn) => {
+            console.log(btn.value)
+            console.log(document.getElementById("selectYear").value)
+            console.log(document.getElementById("od").value)
+            console.log(document.getElementById("do").value)
+
+            let action = btn.value
+            let year = document.getElementById("selectYear").value
+            let od = document.getElementById("od").value
+
+            if (od==""){
+                od=0
+            }
+
+            let doo = document.getElementById("do").value
+
+            if (doo==""){
+                doo=10000000
+            }
+
+            console.log(od)
+            console.log(doo)
+
+            let json = await fetchfakturagen(action, year, od, doo)
+            console.log(json)
+
+            if (json[0]=="all"){
+                document.getElementById("fakturaAll").href = "/invoices?name="+json[1]
+            }else if (json[0]=="year"){
+                document.getElementById("fakturaYear").href = "/invoices?name="+json[1]
+            }else if(json[0]=="prize"){
+                document.getElementById("fakturaPrize").href = "/invoices?name="+json[1]
+            }
+            //await wyswietlanie()
+        }
+
+        fetchfakturagen = async (action, year, od, doo) => {
+
+            const data = JSON.stringify({
+                action: action,
+                year: year,
+                od: od,
+                doo: doo
+            })
+
+            const options = {
+                method: "POST",
+                body: data,
+            };
+
+            let response = await fetch("/invoicev2", options)
+
+            if (!response.ok)
+                return response.status
+            else
+                return await response.json() // response.json
+
+        }
+
+
+
+
+
+        fetchPostAsync = async () => {
+
+            const data = JSON.stringify({
+                a:1,
+                b:2
+            })
+
+            const options = {
+                method: "POST",
+                body: data,
+            };
+
+            let response = await fetch("/getdata", options)
+
+            if (!response.ok)
+                return response.status
+            else
+                return await response.json() // response.json
+
+        }
+
+
+        document.body.onload=wyswietlanie()
+
+        async function wyswietlanie(){
+            document.getElementById("table").innerText = ""
+            let  json = await fetchPostAsync()
+
+            tr = document.createElement("tr")
+
+            td = document.createElement("td")
+            td.innerText="Lp"
+            tr.appendChild(td)
+
+            td = document.createElement("td")
+            td.innerText="marka"
+            tr.appendChild(td)
+
+            td = document.createElement("td")
+            td.innerText="rok"
+            tr.appendChild(td)
+
+            td = document.createElement("td")
+            td.innerText="poduszki"
+            tr.appendChild(td)
+
+            td = document.createElement("td")
+            td.innerText="kolor"
+            tr.appendChild(td)
+
+            td = document.createElement("td")
+            td.innerText="zdjęcie"
+            tr.appendChild(td)
+
+            td = document.createElement("td")
+            td.innerText="data sprzedaży"
+            tr.appendChild(td)
+
+            td = document.createElement("td")
+            td.innerText="cena"
+            tr.appendChild(td)
+
+            td = document.createElement("td")
+            td.innerText="vat"
+            tr.appendChild(td)
+
+            document.getElementById("table").appendChild(tr)
+
+
+            console.log(json)
+            for (let i =0;i<json.length;i++){
+                let tr = document.createElement("tr")
+                let td = document.createElement("td")
+                td.innerText=i
+                tr.appendChild(td)
+
+                td = document.createElement("td")
+                td.innerText=json[i].model
+                tr.appendChild(td)
+
+                td = document.createElement("td")
+                td.innerText=  json[i].rok
+                tr.appendChild(td)
+
+                td = document.createElement("td")
+                td.innerHTML= poprawjsona(json[i].airbags)
+                tr.appendChild(td)
+
+                td = document.createElement("td")
+                td.style.backgroundColor= json[i].kolor
+                tr.appendChild(td)
+
+                td =document.createElement("td")
+                imgik = document.createElement("img")
+                imgik.src = "/img/"+json[i].model + ".jpg"
+                imgik.width = 200
+                imgik.height = 200
+                td.appendChild(imgik)
+                tr.appendChild(td)
+
+                td = document.createElement("td")
+                td.innerText=json[i].dataSprzedazy.year + "/"+json[i].dataSprzedazy.month + "/"+json[i].dataSprzedazy.day
+                tr.appendChild(td)
+
+                td = document.createElement("td")
+                td.innerText=json[i].cena
+                tr.appendChild(td)
+
+                td = document.createElement("td")
+                td.innerText=json[i].vat
+                tr.appendChild(td)
+
+
+                document.getElementById("table").appendChild(tr)
+            }
+        }
+
+        fakturapobierz = async (name) => {
+            let json = await fetchfakturapobierz(name)
+            console.log(json)
+            //await wyswietlanie()
+        }
+
+        fetchfakturapobierz = async (id) => {
+
+            const data = JSON.stringify({
+                name:id,
+            })
+
+            const options = {
+                method: "GET",
+                body: data,
+            };
+
+            let response = await fetch("/invoices", options)
+
+            if (!response.ok)
+                return response.status
+            else
+                return await response.json() // response.json
+
+        }
+
+
+        fetchfaktura = async (id) => {
+
+            const data = JSON.stringify({
+                idpoj:id,
+            })
+
+            const options = {
+                method: "POST",
+                body: data,
+            };
+
+            let response = await fetch("/invoice", options)
+
+            if (!response.ok)
+                return response.status
+            else
+                return await response.json() // response.json
+
+        }
+
+        async function faktura(id){
+            let json = await fetchfaktura(id)
+            console.log(json)
+            await wyswietlanie()
+        }
+
+        function poprawjsona(tab){
+
+            let dane = ""
+            for(let j = 0; j<tab.length;j++){
+                //console.log(tab[j].description)
+                let danepodrodze = (tab[j].description) +":"+tab[j].value + "<br/>"
+                //console.log(danepodrodze)
+                dane = dane + danepodrodze
+            }
+            return dane
+        }
+
+        fetchGenerate = async () => {
+
+            const data = JSON.stringify({
+                a:10
+            })
+
+            const options = {
+                method: "POST",
+                body: data,
+            };
+
+            let response = await fetch("/generate", options)
+
+            if (!response.ok)
+                return response.status
+            else
+                return await response.json() // response.json
+
+        }
+
+        document.getElementById("random").onclick = async () => {
+            let json = await fetchGenerate()
+            console.log(json)
+            await wyswietlanie()
+        }
+
+    </script>
+</body>
+</html>

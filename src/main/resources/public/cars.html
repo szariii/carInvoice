@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <style>
+        td{
+            border: 2px solid black;
+        }
+    </style>
+</head>
+<body>
+<p><a href="index.html">Strona index</a> </p>
+<p><a href="admin.html">Faktury</a> </p>
+<p><a href="search.html">search invoices</a> </p>
+<div id="upek"></div>
+    <table id="table">
+
+    </table>
+
+    <script>
+        fetchPostAsync = async () => {
+
+            const data = JSON.stringify({
+                a:1,
+                b:2
+            })
+
+            const options = {
+                method: "POST",
+                body: data,
+            };
+
+            let response = await fetch("/getdata", options)
+
+            if (!response.ok)
+                return response.status
+            else
+                return await response.json() // response.json
+
+        }
+
+        document.body.onload=wyswietlanie()
+
+            async function wyswietlanie(){
+            let  json = await fetchPostAsync()
+            console.log(json)
+            for (let i =0;i<json.length;i++){
+                let tr = document.createElement("tr")
+                let td = document.createElement("td")
+                td.innerText=json[i].id
+                tr.appendChild(td)
+
+                td = document.createElement("td")
+                td.innerText=json[i].uuid
+                tr.appendChild(td)
+
+                td = document.createElement("td")
+                td.innerText= "car model "+ json[i].model
+                tr.appendChild(td)
+
+                td = document.createElement("td")
+                td.innerText= json[i].rok
+                tr.appendChild(td)
+
+                td = document.createElement("td")
+                td.innerHTML= poprawjsona(json[i].airbags)
+                tr.appendChild(td)
+
+                td = document.createElement("td")
+                td.style.backgroundColor= json[i].kolor
+                tr.appendChild(td)
+
+                td = document.createElement("td")
+                td.innerHTML= '<button type="button" onClick="delet('+json[i].id+')">Delete car</button>'
+                tr.appendChild(td)
+
+                td = document.createElement("td")
+                td.innerHTML= '<button type="button" onClick="update('+json[i].id+')">Update car</button>'
+                tr.appendChild(td)
+
+                document.getElementById("table").appendChild(tr)
+            }
+        }
+
+        function poprawjsona(tab){
+
+            let dane = ""
+            for(let j = 0; j<tab.length;j++){
+                //console.log(tab[j].description)
+                let danepodrodze = (tab[j].description) +":"+tab[j].value + "<br/>"
+                console.log(danepodrodze)
+                dane = dane + danepodrodze
+            }
+            return dane
+        }
+
+
+
+        async function delet(id){
+            await fetchDelete(id)
+            document.getElementById("table").innerText= ""
+            await wyswietlanie()
+
+        }
+
+        fetchDelete = async (id) => {
+
+            const data = JSON.stringify({
+                idpoj:id,
+            })
+
+            const options = {
+                method: "POST",
+                body: data,
+            };
+
+            let response = await fetch("/delete", options)
+
+            if (!response.ok)
+                return response.status
+            else
+                return await response // response.json
+
+        }
+
+
+        fetchUpdate = async (id) => {
+
+            const data = JSON.stringify({
+                idpoj:id,
+                model:document.getElementById("inpmodel").value,
+                rok:document.getElementById("selectyear").value
+            })
+
+            const options = {
+                method: "POST",
+                body: data,
+            };
+
+            let response = await fetch("/update", options)
+
+            if (!response.ok)
+                return response.status
+            else
+                return await response // response.json
+
+        }
+
+        async function update(id){
+            console.log(id)
+            let div = document.createElement("div")
+            div.id = "updateform"
+            div.style.position = "absolute"
+            div.style.width="400px"
+            div.style.borderRadius = "20px"
+            div.style.top = "50%"
+            div.style.left = "50%"
+            div.style.transform = "translate(-50%, -50%)"
+            div.style.height ="300px"
+            div.style.backgroundColor = "#0000FF"
+            let inpmodel = document.createElement("input")
+            inpmodel.defaultValue = "car model"
+            inpmodel.id = "inpmodel"
+            div.appendChild(inpmodel)
+            let selectyear = document.createElement("select")
+            selectyear.id = "selectyear"
+            for (let i = 2001; i<2005;i++){
+                let optionyear = document.createElement("option")
+                optionyear.innerText = i
+                optionyear.value = i
+                selectyear.appendChild(optionyear)
+            }
+            div.appendChild(selectyear)
+
+            let br = document.createElement("br")
+            div.appendChild(br)
+
+            let updatebutton = document.createElement("button")
+            updatebutton.innerText="Update"
+            updatebutton.onclick = function (){
+                updateaction(id)
+            }
+            div.appendChild(updatebutton)
+
+            let cancelbutton = document.createElement("button")
+            cancelbutton.innerText="cancel"
+            cancelbutton.onclick = function (){
+                console.log("weszlo w to")
+                document.getElementById("updateform").remove()
+            }
+            div.appendChild(cancelbutton)
+
+            document.getElementById("upek").appendChild(div)
+
+
+        }
+
+        async function updateaction (id){
+            console.log("weszlo w to drugie")
+            await fetchUpdate(id)
+            await document.getElementById("updateform").remove()
+            document.getElementById("table").innerText= ""
+            await wyswietlanie()
+        }
+
+    </script>
+</body>
+</html>

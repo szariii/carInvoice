@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <style>
+        td{
+            border: 2px solid black;
+        }
+    </style>
+</head>
+<body>
+    <button type="button" id="random">Generuj losowo baze samochodow</button>
+    <p><a href="index.html">Index</a> </p>
+    <p><a href="cars.html">delete/update cars</a> </p>
+    <p><a href="search.html">search invoices</a> </p>
+    <table id="table"></table>
+
+    <script>
+
+        fetchPostAsync = async () => {
+
+            const data = JSON.stringify({
+                a:1,
+                b:2
+            })
+
+            const options = {
+                method: "POST",
+                body: data,
+            };
+
+            let response = await fetch("/getdata", options)
+
+            if (!response.ok)
+                return response.status
+            else
+                return await response.json() // response.json
+
+        }
+
+
+        document.body.onload=wyswietlanie()
+
+        async function wyswietlanie(){
+            document.getElementById("table").innerText = ""
+            let  json = await fetchPostAsync()
+            console.log(json)
+            for (let i =0;i<json.length;i++){
+                let tr = document.createElement("tr")
+                let td = document.createElement("td")
+                td.innerText=json[i].id
+                tr.appendChild(td)
+
+                td = document.createElement("td")
+                td.innerText=json[i].uuid
+                tr.appendChild(td)
+
+                td = document.createElement("td")
+                td.innerText= "car model "+ json[i].model
+                tr.appendChild(td)
+
+                td = document.createElement("td")
+                td.innerText= json[i].rok
+                tr.appendChild(td)
+
+                td = document.createElement("td")
+                td.innerHTML= poprawjsona(json[i].airbags)
+                tr.appendChild(td)
+
+                td = document.createElement("td")
+                td.style.backgroundColor= json[i].kolor
+                tr.appendChild(td)
+
+                td = document.createElement("td")
+                td.innerHTML= '<button type="button" onClick="faktura('+json[i].id+')">Generuj fakture VAT</button>'
+                tr.appendChild(td)
+
+                td = document.createElement("td")
+                td.id = "download"
+                td.innerHTML= ''
+                if (json[i].faktura==true){
+                    //td.innerHTML="<a onclick='fakturapobierz("+json[i].id+")' href='/invoices&name='>Pobierz</a>"
+                    td.innerHTML="<a href='/invoices?name="+json[i].id+"'>Pobierz</a>"
+                }
+
+                tr.appendChild(td)
+
+                document.getElementById("table").appendChild(tr)
+            }
+        }
+
+        fakturapobierz = async (name) => {
+            let json = await fetchfakturapobierz(name)
+            //console.log(json)
+
+            //Usun w razie czego
+            //await wyswietlanie()
+        }
+
+        fetchfakturapobierz = async (id) => {
+
+            const data = JSON.stringify({
+                name:id,
+            })
+
+            const options = {
+                method: "GET",
+                body: data,
+            };
+
+            let response = await fetch("/invoices", options)
+
+            if (!response.ok)
+                return response.status
+            else
+                return await response.json() // response.json
+
+        }
+
+
+        fetchfaktura = async (id) => {
+
+            const data = JSON.stringify({
+                idpoj:id,
+            })
+
+            const options = {
+                method: "POST",
+                body: data,
+            };
+
+            let response = await fetch("/invoice", options)
+
+            if (!response.ok)
+                return response.status
+            else
+                return await response.json() // response.json
+
+        }
+
+        async function faktura(id){
+            let json = await fetchfaktura(id)
+            console.log(json)
+            await wyswietlanie()
+        }
+
+        function poprawjsona(tab){
+
+            let dane = ""
+            for(let j = 0; j<tab.length;j++){
+                //console.log(tab[j].description)
+                let danepodrodze = (tab[j].description) +":"+tab[j].value + "<br/>"
+                //console.log(danepodrodze)
+                dane = dane + danepodrodze
+            }
+            return dane
+        }
+
+        fetchGenerate = async () => {
+
+            const data = JSON.stringify({
+                a:10
+            })
+
+            const options = {
+                method: "POST",
+                body: data,
+            };
+
+            let response = await fetch("/generate", options)
+
+            if (!response.ok)
+                return response.status
+            else
+                return await response.json() // response.json
+
+        }
+
+        document.getElementById("random").onclick = async () => {
+            let json = await fetchGenerate()
+            console.log(json)
+            await wyswietlanie()
+        }
+
+    </script>
+</body>
+</html>
